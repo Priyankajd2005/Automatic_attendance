@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+instance/
+face_data/
+app/uploads/
+app/static/uploads/
+app/static/uploads/

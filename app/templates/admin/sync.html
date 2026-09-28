@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Google Sheets Sync{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1">
+    <li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}">Admin</a></li>
+    <li class="breadcrumb-item active">Google Sheets Sync</li>
+  </ol></nav>
+  <h1><i class="fab fa-google me-2 text-success"></i>Sync from Google Forms</h1>
+  <p>Import student data and photos from a Google Sheets spreadsheet</p>
+</div>
+
+<div class="row g-4">
+  <!-- Instructions -->
+  <div class="col-lg-4">
+    <div class="card bg-light">
+      <div class="card-header bg-transparent fw-semibold"><i class="fas fa-list-ol me-2 text-primary"></i>Setup Instructions</div>
+      <div class="card-body">
+        <ol class="small text-muted ps-3">
+          <li class="mb-2">Create a <strong>Google Form</strong> with these fields:
+            Full Name, Roll Number, College, Department, Semester, Student ID, Email, Phone, Front Photo, Left Photo, Right Photo.</li>
+          <li class="mb-2">Google Forms automatically creates a <strong>Google Sheet</strong> with responses. Open it.</li>
+          <li class="mb-2">Set the sheet to <strong>"Anyone with link can view"</strong> sharing, or share it with your service account email.</li>
+          <li class="mb-2">Copy the <strong>Spreadsheet ID</strong> from the URL:<br>
+            <code style="font-size:.75rem;">...spreadsheets/d/<strong>SPREADSHEET_ID</strong>/edit</code></li>
+          <li class="mb-2">Set up a <strong>Google Service Account</strong>, download credentials JSON, and place it as <code>google_credentials.json</code> in the app root.</li>
+          <li class="mb-2">Share the sheet with the <strong>service account email</strong> (Viewer access).</li>
+          <li>Click <strong>Sync Now</strong>!</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header fw-semibold"><i class="fas fa-key me-2"></i>Credentials File</div>
+      <div class="card-body small">
+        <p class="text-muted mb-2">Place your Google Service Account credentials at:</p>
+        <code class="d-block p-2 bg-light rounded">google_credentials.json</code>
+        <p class="text-muted mt-2 mb-0">Download from Google Cloud Console → APIs & Services → Credentials.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sync Form -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><i class="fas fa-sync me-2"></i>Sync Configuration</div>
+      <div class="card-body p-4">
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Google Spreadsheet ID <span class="text-danger">*</span></label>
+            <input type="text" name="spreadsheet_id" class="form-control font-monospace"
+                   placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" required />
+            <div class="form-text">Found in the Google Sheets URL between <code>/d/</code> and <code>/edit</code></div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Sheet Tab Name</label>
+            <input type="text" name="sheet_name" class="form-control" value="Form Responses 1"
+                   placeholder="Form Responses 1" />
+            <div class="form-text">Default sheet tab name for Google Forms responses.</div>
+          </div>
+
+          <h6 class="fw-semibold mt-4 mb-3 border-bottom pb-2">Column Mapping</h6>
+          <p class="text-muted small">Map your Google Sheet's column headers to the system fields:</p>
+
+          <div class="row g-3">
+            {% set fields = [
+              ('full_name',   'Full Name', 'Required'),
+              ('roll_number', 'Roll Number', 'Required – must be unique'),
+              ('college',     'College Name', ''),
+              ('department',  'Department', ''),
+              ('semester',    'Semester', ''),
+              ('student_id',  'Student ID', ''),
+              ('email',       'Email Address', ''),
+              ('phone',       'Phone Number', ''),
+              ('photo1',      'Front Photo URL', 'Google Drive photo link'),
+              ('photo2',      'Left Side Photo URL', 'Optional'),
+              ('photo3',      'Right Side Photo URL', 'Optional'),
+            ] %}
+            {% for field, label, hint in fields %}
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">{{ label }}
+                {% if 'Required' in hint %}<span class="text-danger">*</span>{% endif %}
+              </label>
+              <input type="text" name="col_{{ field }}" class="form-control form-control-sm"
+                     value="{{ default_mapping[field] }}" placeholder="{{ default_mapping[field] }}" />
+              {% if hint %}<div class="form-text">{{ hint }}</div>{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-success btn-lg">
+              <i class="fas fa-sync me-2"></i>Sync Now
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

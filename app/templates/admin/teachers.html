@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Teachers{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1">
+      <li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}">Admin</a></li>
+      <li class="breadcrumb-item active">Teachers</li>
+    </ol></nav>
+    <h1><i class="fas fa-chalkboard-teacher me-2"></i>Teachers</h1>
+    <p>{{ teachers|length }} teacher account(s)</p>
+  </div>
+  <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
+    <i class="fas fa-plus me-1"></i>Add Teacher
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    {% if teachers %}
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead>
+          <tr><th>#</th><th>Name</th><th>Username</th><th>College</th><th>Joined</th><th>Sessions</th></tr>
+        </thead>
+        <tbody>
+          {% for teacher in teachers %}
+          <tr>
+            <td class="text-muted small">{{ loop.index }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="icon-circle bg-primary bg-opacity-10 text-primary" style="width:36px;height:36px;font-size:.9rem;">
+                  <i class="fas fa-user-tie"></i>
+                </div>
+                <div>
+                  <div class="fw-semibold">{{ teacher.full_name }}</div>
+                  {% if teacher.id == current_user.id %}<span class="badge bg-primary" style="font-size:.65rem;">You</span>{% endif %}
+                </div>
+              </div>
+            </td>
+            <td><code>{{ teacher.username }}</code></td>
+            <td class="text-muted small">{{ teacher.college or '-' }}</td>
+            <td class="text-muted small">{{ teacher.created_at.strftime('%d %b %Y') }}</td>
+            <td><span class="badge bg-secondary">{{ teacher.sessions.count() }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-muted">No teachers found.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

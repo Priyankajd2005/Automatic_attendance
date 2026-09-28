@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}{{ student.full_name }} – Report{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1">
+    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.report') }}">Reports</a></li>
+    <li class="breadcrumb-item active">{{ student.full_name }}</li>
+  </ol></nav>
+  <h1>{{ student.full_name }}</h1>
+  <p><code class="text-primary">{{ student.roll_number }}</code> · {{ student.department }} · Semester {{ student.semester }}</p>
+</div>
+
+<div class="row g-4">
+  <!-- Overall Summary -->
+  <div class="col-lg-4">
+    <div class="card text-center p-4">
+      <!-- Percentage circle -->
+      <div class="mb-3">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="60" fill="none" stroke="#e8eaed" stroke-width="14"/>
+          <circle cx="70" cy="70" r="60" fill="none"
+                  stroke="{{ '#34a853' if pct >= 75 else '#fbbc04' if pct >= 50 else '#ea4335' }}"
+                  stroke-width="14"
+                  stroke-dasharray="{{ (pct / 100 * 376.99)|round }}, 376.99"
+                  stroke-linecap="round"
+                  transform="rotate(-90 70 70)"/>
+          <text x="70" y="70" text-anchor="middle" dominant-baseline="central"
+                font-size="28" font-weight="bold"
+                fill="{{ '#34a853' if pct >= 75 else '#fbbc04' if pct >= 50 else '#ea4335' }}">
+            {{ pct }}%
+          </text>
+          <text x="70" y="92" text-anchor="middle" font-size="11" fill="#9aa0a6">Attendance</text>
+        </svg>
+      </div>
+
+      <div class="row g-2 text-center">
+        <div class="col-4">
+          <div class="fw-bold text-success fs-4">{{ present }}</div>
+          <div class="text-muted small">Present</div>
+        </div>
+        <div class="col-4">
+          <div class="fw-bold text-danger fs-4">{{ absent }}</div>
+          <div class="text-muted small">Absent</div>
+        </div>
+        <div class="col-4">
+          <div class="fw-bold fs-4">{{ total }}</div>
+          <div class="text-muted small">Total</div>
+        </div>
+      </div>
+
+      {% if pct < 75 %}
+      <div class="alert alert-warning mt-3 py-2 small">
+        <i class="fas fa-exclamation-triangle me-1"></i>
+        Attendance below 75%. Student at risk.
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header">Student Info</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tr><th class="ps-3" style="width:40%">College</th><td>{{ student.college or '-' }}</td></tr>
+          <tr><th class="ps-3">Department</th><td>{{ student.department or '-' }}</td></tr>
+          <tr><th class="ps-3">Semester</th><td>{{ student.semester or '-' }}</td></tr>
+          <tr><th class="ps-3">Email</th><td>{{ student.email or '-' }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <!-- Subject-wise breakdown -->
+    {% if subject_data %}
+    <div class="card mb-4">
+      <div class="card-header"><i class="fas fa-book me-2"></i>Subject-wise Attendance</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead>
+            <tr><th>Subject</th><th>Total Classes</th><th>Present</th><th>Absent</th><th>Percentage</th></tr>
+          </thead>
+          <tbody>
+            {% for sub_name, sub_total, sub_present in subject_data %}
+            {% set sub_pct = ((sub_present / sub_total * 100)|round|int) if sub_total else 0 %}
+            <tr>
+              <td class="fw-semibold">{{ sub_name }}</td>
+              <td>{{ sub_total }}</td>
+              <td class="text-success fw-semibold">{{ sub_present }}</td>
+              <td class="text-danger fw-semibold">{{ sub_total - sub_present }}</td>
+              <td style="width:200px;">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height:6px;">
+                    <div class="progress-bar {{ 'bg-success' if sub_pct >= 75 else 'bg-warning' if sub_pct >= 50 else 'bg-danger' }}"
+                         style="width:{{ sub_pct }}%"></div>
+                  </div>
+                  <span class="small fw-semibold {{ 'text-success' if sub_pct >= 75 else 'text-warning' if sub_pct >= 50 else 'text-danger' }}">
+                    {{ sub_pct }}%
+                  </span>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent records -->
+    <div class="card">
+      <div class="card-header"><i class="fas fa-clock me-2"></i>Attendance History</div>
+      <div class="card-body p-0">
+        {% if all_records %}
+        <div style="max-height:400px;overflow-y:auto;">
+          <table class="table mb-0">
+            <thead class="sticky-top bg-white">
+              <tr><th>Date</th><th>Subject</th><th>Period</th><th>Status</th><th>Method</th></tr>
+            </thead>
+            <tbody>
+              {% for record in all_records %}
+              <tr>
+                <td>{{ record.session.date.strftime('%d %b %Y') }}</td>
+                <td class="small">{{ record.session.subject.name if record.session.subject else '-' }}</td>
+                <td class="text-muted small">{{ record.session.period or '-' }}</td>
+                <td>
+                  {% if record.status == 'Present' %}
+                    <span class="badge-present">Present</span>
+                  {% else %}
+                    <span class="badge-absent">Absent</span>
+                  {% endif %}
+                </td>
+                <td><span class="badge {% if record.marked_by == 'auto' %}bg-info{% else %}bg-secondary{% endif %}">{{ record.marked_by }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted">No records yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

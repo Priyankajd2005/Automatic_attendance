@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Manage Subjects{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1">
+      <li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}">Admin</a></li>
+      <li class="breadcrumb-item active">Subjects</li>
+    </ol></nav>
+    <h1><i class="fas fa-book me-2"></i>Manage Subjects</h1>
+    <p>{{ subjects|length }} subject(s) configured</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Add Subject Form -->
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header fw-semibold"><i class="fas fa-plus me-2"></i>Add New Subject</div>
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('admin.add_subject') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Subject Name <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. Data Structures" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Subject Code</label>
+            <input type="text" name="code" class="form-control" placeholder="e.g. CS201" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">College</label>
+            <input type="text" name="college" class="form-control" placeholder="e.g. ABC Engineering" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Department</label>
+            <input type="text" name="department" class="form-control" list="deptList2"
+                   placeholder="e.g. Computer Science" />
+            <datalist id="deptList2">
+              <option>Computer Science</option>
+              <option>Information Technology</option>
+              <option>Electronics Engineering</option>
+              <option>Mechanical Engineering</option>
+            </datalist>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Semester</label>
+            <select name="semester" class="form-select">
+              <option value="">-- All Semesters --</option>
+              {% for i in range(1,9) %}<option value="{{ i }}">Semester {{ i }}</option>{% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="fas fa-plus me-2"></i>Add Subject
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subjects List -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">All Subjects</div>
+      <div class="card-body p-0">
+        {% if subjects %}
+        <div class="table-responsive">
+          <table class="table mb-0">
+            <thead>
+              <tr><th>#</th><th>Subject</th><th>Code</th><th>Department</th><th>Semester</th><th>Sessions</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              {% for sub in subjects %}
+              <tr>
+                <td class="text-muted small">{{ loop.index }}</td>
+                <td class="fw-semibold">{{ sub.name }}</td>
+                <td><code class="text-primary">{{ sub.code or '-' }}</code></td>
+                <td class="text-muted small">{{ sub.department or '-' }}</td>
+                <td class="text-muted small">{% if sub.semester %}Sem {{ sub.semester }}{% else %}-{% endif %}</td>
+                <td><span class="badge bg-secondary">{{ sub.sessions.count() }}</span></td>
+                <td>
+                  <form method="POST" action="{{ url_for('admin.delete_subject', subject_id=sub.id) }}"
+                        onsubmit="return confirm('Delete {{ sub.name }}?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger py-0" {% if sub.sessions.count() > 0 %}disabled title="Has sessions"{% endif %}>
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="fas fa-book fa-2x mb-2 opacity-25"></i>
+          <p class="mb-2 small">No subjects yet.</p>
+          <a href="{{ url_for('admin.create_demo_data') }}" class="btn btn-sm btn-outline-primary"
+             onclick="event.preventDefault(); document.getElementById('demoForm').submit();">Load Demo Subjects</a>
+          <form id="demoForm" method="POST" action="{{ url_for('admin.create_demo_data') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          </form>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

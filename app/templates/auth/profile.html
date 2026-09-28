@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-user-circle me-2"></i>My Profile</h1>
+  <p>Update your account information</p>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card text-center p-4">
+      <div class="mb-3">
+        <div class="icon-circle bg-primary text-white mx-auto" style="width:80px;height:80px;font-size:2.5rem;">
+          <i class="fas fa-user-tie"></i>
+        </div>
+      </div>
+      <h5 class="fw-bold">{{ current_user.full_name }}</h5>
+      <p class="text-muted small">@{{ current_user.username }}</p>
+      <span class="badge bg-primary">Teacher</span>
+      {% if current_user.college %}
+        <p class="text-muted small mt-2"><i class="fas fa-university me-1"></i>{{ current_user.college }}</p>
+      {% endif %}
+      <p class="text-muted small"><i class="fas fa-calendar me-1"></i>Joined {{ current_user.created_at.strftime('%B %Y') }}</p>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">Update Profile</div>
+      <div class="card-body p-4">
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Full Name</label>
+              <input type="text" name="full_name" class="form-control" value="{{ current_user.full_name }}" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Username</label>
+              <input type="text" class="form-control" value="{{ current_user.username }}" disabled />
+              <div class="form-text">Username cannot be changed.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">College / Institution</label>
+              <input type="text" name="college" class="form-control" value="{{ current_user.college or '' }}" />
+            </div>
+            <div class="col-12"><hr /><h6 class="fw-semibold text-muted">Change Password (optional)</h6></div>
+            <div class="col-md-6">
+              <label class="form-label">New Password</label>
+              <input type="password" name="new_password" class="form-control" placeholder="Leave blank to keep current" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Confirm New Password</label>
+              <input type="password" name="confirm_new_password" class="form-control" placeholder="Repeat new password" />
+            </div>
+          </div>
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

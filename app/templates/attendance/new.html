@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% block title %}New Attendance Session{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-camera me-2"></i>Take Attendance</h1>
+  <p>Upload a classroom photograph to automatically detect student attendance</p>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><i class="fas fa-clipboard-list me-2"></i>Session Details</div>
+      <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data" id="attendanceForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">College / Institution</label>
+              <input type="text" name="college" id="college" class="form-control" placeholder="e.g. ABC Engineering College"
+                     value="{{ current_user.college or '' }}" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
+              <input type="text" name="department" id="dept_input" class="form-control" list="deptList"
+                     placeholder="e.g. Computer Science" required />
+              <datalist id="deptList">
+                <option>Computer Science</option>
+                <option>Information Technology</option>
+                <option>Electronics Engineering</option>
+                <option>Mechanical Engineering</option>
+                <option>Civil Engineering</option>
+              </datalist>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Semester <span class="text-danger">*</span></label>
+              <select name="semester" id="semester_sel" class="form-select" required>
+                <option value="">-- Select --</option>
+                {% for i in range(1,9) %}<option value="{{ i }}">Semester {{ i }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Subject</label>
+              <select name="subject_id" id="subject_sel" class="form-select">
+                <option value="">-- Select Department & Semester first --</option>
+                {% for s in subjects %}
+                  <option value="{{ s.id }}">{{ s.name }} ({{ s.code }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
+              <input type="date" name="date" class="form-control" value="{{ today }}" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Period / Time Slot</label>
+              <select name="period" class="form-select">
+                <option value="">-- Select Period --</option>
+                {% for p in ['Period 1 (8:00–9:00)', 'Period 2 (9:00–10:00)', 'Period 3 (10:00–11:00)',
+                             'Period 4 (11:00–12:00)', 'Period 5 (12:00–13:00)', 'Period 6 (14:00–15:00)',
+                             'Period 7 (15:00–16:00)', 'Period 8 (16:00–17:00)'] %}
+                  <option value="{{ p }}">{{ p }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <hr class="my-4" />
+          <h6 class="fw-semibold mb-3"><i class="fas fa-camera me-2"></i>Upload Classroom Photograph</h6>
+
+          <div class="photo-dropzone" id="classroomDropzone">
+            <input type="file" name="classroom_photo" id="classroom_photo" accept="image/*" required />
+            <div class="upload-content text-center" id="classroomUploadContent">
+              <div class="upload-icon text-primary"><i class="fas fa-image fa-2x"></i></div>
+              <div class="fw-semibold mt-2">Click or drag to upload classroom photo</div>
+              <div class="text-muted small mt-1">JPG, PNG, JPEG supported · Max 16MB</div>
+              <div class="text-muted small">The system will automatically detect and recognize student faces</div>
+            </div>
+            <img id="classroomPreview" class="preview-img" style="display:none;" />
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary btn-lg w-100" id="submitBtn">
+              <i class="fas fa-magic me-2"></i>Process Attendance with AI
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="col-lg-5">
+    <div class="card bg-light">
+      <div class="card-header bg-transparent border-0 fw-semibold"><i class="fas fa-info-circle me-2 text-primary"></i>How It Works</div>
+      <div class="card-body pt-0">
+        {% set steps = [
+          ('1', 'fa-clipboard-list', 'primary', 'Fill Session Details', 'Select college, department, semester, subject, date and period.'),
+          ('2', 'fa-camera', 'success', 'Upload Classroom Photo', 'Take a photo of the classroom showing students\' faces clearly.'),
+          ('3', 'fa-brain', 'warning', 'AI Face Recognition', 'The system detects and matches student faces from the database.'),
+          ('4', 'fa-check-circle', 'info', 'Review & Confirm', 'Review auto-generated attendance, make corrections, and save.'),
+        ] %}
+        {% for num, icon, color, title, desc in steps %}
+        <div class="d-flex gap-3 mb-3">
+          <div class="icon-circle bg-{{ color }} text-white flex-shrink-0" style="width:38px;height:38px;font-size:.95rem;">
+            <i class="fas {{ icon }}"></i>
+          </div>
+          <div>
+            <div class="fw-semibold">{{ title }}</div>
+            <div class="text-muted small">{{ desc }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header fw-semibold"><i class="fas fa-lightbulb me-2 text-warning"></i>Photo Tips</div>
+      <div class="card-body">
+        <ul class="mb-0 small text-muted">
+          <li class="mb-1">Ensure good lighting in the classroom</li>
+          <li class="mb-1">Students should face the camera</li>
+          <li class="mb-1">Avoid heavy shadows across faces</li>
+          <li class="mb-1">Higher resolution = better accuracy</li>
+          <li class="mb-1">Students should be seated, not moving</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="display:none;">
+  <div class="text-center">
+    <div class="spinner-border" style="width:3.5rem;height:3.5rem;color:#1a73e8;"></div>
+    <h5 class="mt-4">Processing Attendance...</h5>
+    <p class="text-muted">Detecting and recognizing faces in the classroom photo.<br>This may take a few seconds.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Show classroom photo preview
+const classroomInput = document.getElementById('classroom_photo');
+const classroomPreview = document.getElementById('classroomPreview');
+const classroomUploadContent = document.getElementById('classroomUploadContent');
+
+classroomInput?.addEventListener('change', () => {
+  const file = classroomInput.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      classroomPreview.src = e.target.result;
+      classroomPreview.style.display = 'block';
+      classroomUploadContent.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// Show loading overlay on form submit
+document.getElementById('attendanceForm')?.addEventListener('submit', function(e) {
+  const photo = classroomInput.files[0];
+  if (!photo) return;
+  document.getElementById('loadingOverlay').style.display = 'flex';
+});
+
+// Dynamic subject loading
+const deptInput = document.getElementById('dept_input');
+const semSel = document.getElementById('semester_sel');
+const subjectSel = document.getElementById('subject_sel');
+
+function loadSubjectsForSession() {
+  const dept = deptInput?.value.trim();
+  const sem = semSel?.value;
+  if (!dept || !sem) return;
+  fetch(`/attendance/api/subjects?department=${encodeURIComponent(dept)}&semester=${encodeURIComponent(sem)}`)
+    .then(r => r.json())
+    .then(data => {
+      subjectSel.innerHTML = '<option value="">-- Select Subject (Optional) --</option>';
+      data.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.name} (${s.code})`;
+        subjectSel.appendChild(opt);
+      });
+    });
+}
+
+deptInput?.addEventListener('change', loadSubjectsForSession);
+semSel?.addEventListener('change', loadSubjectsForSession);
+</script>
+{% endblock %}

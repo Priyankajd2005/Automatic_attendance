@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block title %}{{ student.full_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-1">
+        <li class="breadcrumb-item"><a href="{{ url_for('student.list_students') }}">Students</a></li>
+        <li class="breadcrumb-item active">{{ student.full_name }}</li>
+      </ol>
+    </nav>
+    <h1>{{ student.full_name }}</h1>
+    <p><code class="text-primary">{{ student.roll_number }}</code> · {{ student.department or 'N/A' }} · Semester {{ student.semester or 'N/A' }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('student.edit', student_id=student.id) }}" class="btn btn-outline-primary">
+      <i class="fas fa-edit me-1"></i>Edit
+    </a>
+    <form method="POST" action="{{ url_for('student.delete', student_id=student.id) }}"
+          onsubmit="return confirm('Remove this student?')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit" class="btn btn-outline-danger"><i class="fas fa-trash me-1"></i>Remove</button>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Profile Card -->
+  <div class="col-lg-4">
+    <div class="card text-center p-4">
+      <!-- Face Photos -->
+      <div class="d-flex justify-content-center gap-2 mb-3">
+        {% set photos = student.photo_paths %}
+        {% if photos %}
+          {% for photo in photos %}
+            {% set fname = photo.split('/')[-1].split('\\')[-1] %}
+            <img src="{{ url_for('static', filename='uploads/photos/' + fname) }}"
+                 class="student-photo-thumb"
+                 onerror="this.style.display='none';"
+                 title="Photo {{ loop.index }}" />
+          {% endfor %}
+        {% else %}
+          <div class="icon-circle bg-primary bg-opacity-10 text-primary mx-auto" style="width:100px;height:100px;font-size:3rem;">
+            <i class="fas fa-user"></i>
+          </div>
+        {% endif %}
+      </div>
+
+      <h5 class="fw-bold">{{ student.full_name }}</h5>
+      <p class="text-muted small mb-1"><i class="fas fa-id-badge me-1"></i>{{ student.roll_number }}</p>
+      {% if student.email %}<p class="text-muted small mb-1"><i class="fas fa-envelope me-1"></i>{{ student.email }}</p>{% endif %}
+      {% if student.phone %}<p class="text-muted small mb-1"><i class="fas fa-phone me-1"></i>{{ student.phone }}</p>{% endif %}
+
+      <div class="mt-3">
+        {% if student.face_encoding_path %}
+          <span class="badge bg-success py-2 px-3"><i class="fas fa-brain me-1"></i>Face Encoded</span>
+        {% else %}
+          <span class="badge bg-warning text-dark py-2 px-3"><i class="fas fa-exclamation me-1"></i>No Face Encoding</span>
+        {% endif %}
+      </div>
+
+      <!-- Attendance Summary -->
+      <div class="mt-4 p-3 bg-light rounded">
+        <div class="row g-2 text-center">
+          <div class="col-4">
+            <div class="fw-bold text-success fs-5">{{ present }}</div>
+            <div class="text-muted" style="font-size:.75rem;">Present</div>
+          </div>
+          <div class="col-4">
+            <div class="fw-bold text-danger fs-5">{{ absent }}</div>
+            <div class="text-muted" style="font-size:.75rem;">Absent</div>
+          </div>
+          <div class="col-4">
+            <div class="fw-bold text-primary fs-5">{{ pct }}%</div>
+            <div class="text-muted" style="font-size:.75rem;">Overall</div>
+          </div>
+        </div>
+        <div class="progress mt-2" style="height:6px;">
+          <div class="progress-bar bg-success" style="width:{{ pct }}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Details -->
+    <div class="card mt-4">
+      <div class="card-header">Student Information</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr><th class="ps-3" style="width:40%">College</th><td>{{ student.college or '-' }}</td></tr>
+            <tr><th class="ps-3">Department</th><td>{{ student.department or '-' }}</td></tr>
+            <tr><th class="ps-3">Semester</th><td>{{ student.semester or '-' }}</td></tr>
+            <tr><th class="ps-3">Student ID</th><td>{{ student.student_id or '-' }}</td></tr>
+            <tr><th class="ps-3">Registered</th><td>{{ student.registered_at.strftime('%d %b %Y') }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Records -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-clipboard-list me-2"></i>Recent Attendance Records</span>
+        <a href="{{ url_for('dashboard.student_report', roll_number=student.roll_number) }}" class="btn btn-sm btn-outline-primary">
+          Full Report
+        </a>
+      </div>
+      <div class="card-body p-0">
+        {% if records %}
+        <div class="table-responsive">
+          <table class="table mb-0">
+            <thead>
+              <tr><th>Date</th><th>Department</th><th>Period</th><th>Status</th><th>Method</th></tr>
+            </thead>
+            <tbody>
+              {% for record in records %}
+              <tr>
+                <td>{{ record.session.date.strftime('%d %b %Y') }}</td>
+                <td>{{ record.session.department or '-' }}</td>
+                <td>{{ record.session.period or '-' }}</td>
+                <td>
+                  {% if record.status == 'Present' %}
+                    <span class="badge-present">Present</span>
+                  {% elif record.status == 'Absent' %}
+                    <span class="badge-absent">Absent</span>
+                  {% else %}
+                    <span class="badge-unknown">{{ record.status }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge {% if record.marked_by == 'auto' %}bg-info{% else %}bg-secondary{% endif %} text-white">
+                    {{ record.marked_by }}
+                  </span>
+                  {% if record.confidence_score %}
+                    <small class="text-muted ms-1">{{ "%.0f"|format(record.confidence_score * 100) }}%</small>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="fas fa-clipboard fa-2x mb-2 opacity-25"></i>
+          <p class="mb-0 small">No attendance records yet.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

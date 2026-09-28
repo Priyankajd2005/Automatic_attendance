@@ -1,0 +1,990 @@
+{% extends 'base.html' %}
+{% block title %}Register Student{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>
+    <i class="fas fa-user-plus me-2"></i>
+    Register New Student
+  </h1>
+  <p>Fill in the student's information and upload face photographs</p>
+</div>
+
+<!-- =========================
+     STEP INDICATOR
+========================= -->
+<div class="card mb-4 p-3">
+  <div class="step-indicator">
+
+    <div class="step-item active" id="stepItem1">
+      <div class="step-circle">1</div>
+      <div class="step-label">Basic Info</div>
+    </div>
+
+    <div class="step-line"></div>
+
+    <div class="step-item" id="stepItem2">
+      <div class="step-circle">2</div>
+      <div class="step-label">Photos</div>
+    </div>
+
+    <div class="step-line"></div>
+
+    <div class="step-item" id="stepItem3">
+      <div class="step-circle">3</div>
+      <div class="step-label">Confirm</div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- =========================
+     MAIN FORM
+========================= -->
+<form
+  method="POST"
+  enctype="multipart/form-data"
+  id="registerForm"
+>
+
+  <input
+    type="hidden"
+    name="csrf_token"
+    value="{{ csrf_token() }}"
+  >
+
+
+  <!-- =========================
+       STEP 1 - BASIC INFO
+  ========================= -->
+  <div
+    class="form-step"
+    data-step="1"
+    id="step1"
+  >
+
+    <div class="card">
+
+      <div class="card-header">
+        <i class="fas fa-id-card me-2"></i>
+        Step 1 – Basic Information
+      </div>
+
+      <div class="card-body p-4">
+
+        <div class="row g-3">
+
+          <!-- Full Name -->
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">
+              Full Name <span class="text-danger">*</span>
+            </label>
+
+            <input
+              type="text"
+              name="full_name"
+              id="full_name"
+              class="form-control"
+              placeholder="e.g. Rahul Kumar"
+              required
+            >
+          </div>
+
+
+          <!-- Roll Number -->
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">
+              Roll Number <span class="text-danger">*</span>
+            </label>
+
+            <input
+              type="text"
+              name="roll_number"
+              id="roll_number"
+              class="form-control"
+              placeholder="e.g. CS2024001"
+              required
+            >
+          </div>
+
+
+          <!-- College -->
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">
+              College / Institution <span class="text-danger">*</span>
+            </label>
+
+            <input
+              type="text"
+              name="college"
+              id="college"
+              class="form-control"
+              placeholder="e.g. ABC Engineering College"
+              required
+            >
+          </div>
+
+
+          <!-- Department -->
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">
+              Department <span class="text-danger">*</span>
+            </label>
+
+            <input
+              type="text"
+              name="department"
+              id="department"
+              class="form-control"
+              list="deptList"
+              placeholder="e.g. Computer Science"
+              required
+            >
+
+            <datalist id="deptList">
+              <option value="Computer Science">
+              <option value="Information Technology">
+              <option value="Electronics Engineering">
+              <option value="Mechanical Engineering">
+              <option value="Civil Engineering">
+              <option value="Electrical Engineering">
+            </datalist>
+          </div>
+
+
+          <!-- Semester -->
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">
+              Semester <span class="text-danger">*</span>
+            </label>
+
+            <select
+              name="semester"
+              id="semester"
+              class="form-select"
+              required
+            >
+              <option value="">-- Select --</option>
+
+              {% for i in range(1,9) %}
+                <option value="{{ i }}">
+                  Semester {{ i }}
+                </option>
+              {% endfor %}
+
+            </select>
+          </div>
+
+
+          <!-- Student ID -->
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">
+              Student ID
+            </label>
+
+            <input
+              type="text"
+              name="student_id"
+              id="student_id"
+              class="form-control"
+              placeholder="Institution ID"
+            >
+          </div>
+
+
+          <!-- Phone -->
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">
+              Phone
+            </label>
+
+            <input
+              type="tel"
+              name="phone"
+              id="phone"
+              class="form-control"
+              placeholder="10-digit number"
+            >
+          </div>
+
+
+          <!-- Email -->
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">
+              Email Address
+            </label>
+
+            <input
+              type="email"
+              name="email"
+              id="email"
+              class="form-control"
+              placeholder="student@example.com"
+            >
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       STEP 2 - PHOTOS
+  ========================= -->
+  <div
+    class="form-step"
+    data-step="2"
+    id="step2"
+    style="display:none;"
+  >
+
+    <div class="card">
+
+      <div class="card-header">
+        <i class="fas fa-camera me-2"></i>
+        Step 2 – Upload Face Photos
+      </div>
+
+      <div class="card-body p-4">
+
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-1"></i>
+
+          <strong>Photo Instructions</strong>
+
+          <ul class="mb-0 mt-2">
+            <li>Front photo is required.</li>
+            <li>Left and right photos are optional.</li>
+            <li>Use a clear and well-lit face photo.</li>
+            <li>Avoid sunglasses, masks and hats.</li>
+          </ul>
+        </div>
+
+
+        <div class="row g-4">
+
+
+          <!-- FRONT PHOTO -->
+          <div class="col-md-4">
+
+            <label class="form-label fw-semibold text-center d-block">
+              Front Face
+              <span class="text-danger">*</span>
+            </label>
+
+            <div
+              class="photo-dropzone"
+              id="dropzone1"
+            >
+
+              <input
+                type="file"
+                name="photo1"
+                id="photo1"
+                accept="image/*"
+              >
+
+              <div
+                class="upload-content text-center"
+                id="uploadContent1"
+              >
+
+                <div class="upload-icon">
+                  <i class="fas fa-face-smile"></i>
+                </div>
+
+                <div class="upload-text fw-semibold">
+                  Front Face
+                </div>
+
+                <div class="upload-text text-muted small">
+                  Click to select photo
+                </div>
+
+              </div>
+
+              <img
+                id="preview1"
+                class="preview-img"
+                style="display:none;"
+                alt="Front photo preview"
+              >
+
+            </div>
+
+          </div>
+
+
+          <!-- LEFT PHOTO -->
+          <div class="col-md-4">
+
+            <label class="form-label fw-semibold text-center d-block">
+              Left Side
+              <span class="text-muted">(Optional)</span>
+            </label>
+
+            <div
+              class="photo-dropzone"
+              id="dropzone2"
+            >
+
+              <input
+                type="file"
+                name="photo2"
+                id="photo2"
+                accept="image/*"
+              >
+
+              <div
+                class="upload-content text-center"
+                id="uploadContent2"
+              >
+
+                <div class="upload-icon">
+                  <i class="fas fa-face-grin-wide"></i>
+                </div>
+
+                <div class="upload-text fw-semibold">
+                  Left Side
+                </div>
+
+                <div class="upload-text text-muted small">
+                  Click to select photo
+                </div>
+
+              </div>
+
+              <img
+                id="preview2"
+                class="preview-img"
+                style="display:none;"
+                alt="Left photo preview"
+              >
+
+            </div>
+
+          </div>
+
+
+          <!-- RIGHT PHOTO -->
+          <div class="col-md-4">
+
+            <label class="form-label fw-semibold text-center d-block">
+              Right Side
+              <span class="text-muted">(Optional)</span>
+            </label>
+
+            <div
+              class="photo-dropzone"
+              id="dropzone3"
+            >
+
+              <input
+                type="file"
+                name="photo3"
+                id="photo3"
+                accept="image/*"
+              >
+
+              <div
+                class="upload-content text-center"
+                id="uploadContent3"
+              >
+
+                <div class="upload-icon">
+                  <i class="fas fa-face-grin-stars"></i>
+                </div>
+
+                <div class="upload-text fw-semibold">
+                  Right Side
+                </div>
+
+                <div class="upload-text text-muted small">
+                  Click to select photo
+                </div>
+
+              </div>
+
+              <img
+                id="preview3"
+                class="preview-img"
+                style="display:none;"
+                alt="Right photo preview"
+              >
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       STEP 3 - CONFIRM
+  ========================= -->
+  <div
+    class="form-step"
+    data-step="3"
+    id="step3"
+    style="display:none;"
+  >
+
+    <div class="card">
+
+      <div class="card-header">
+        <i class="fas fa-check-circle me-2"></i>
+        Step 3 – Confirm Details
+      </div>
+
+      <div class="card-body p-4">
+
+        <div class="alert alert-success">
+          <i class="fas fa-check me-1"></i>
+          Please review the student details before registration.
+        </div>
+
+
+        <table class="table table-bordered">
+
+          <tbody>
+
+            <tr>
+              <th style="width:35%;">Full Name</th>
+              <td id="confirm_full_name">-</td>
+            </tr>
+
+            <tr>
+              <th>Roll Number</th>
+              <td id="confirm_roll_number">-</td>
+            </tr>
+
+            <tr>
+              <th>College</th>
+              <td id="confirm_college">-</td>
+            </tr>
+
+            <tr>
+              <th>Department</th>
+              <td id="confirm_department">-</td>
+            </tr>
+
+            <tr>
+              <th>Semester</th>
+              <td id="confirm_semester">-</td>
+            </tr>
+
+            <tr>
+              <th>Student ID</th>
+              <td id="confirm_student_id">-</td>
+            </tr>
+
+            <tr>
+              <th>Email</th>
+              <td id="confirm_email">-</td>
+            </tr>
+
+            <tr>
+              <th>Phone</th>
+              <td id="confirm_phone">-</td>
+            </tr>
+
+          </tbody>
+
+        </table>
+
+
+        <div class="alert alert-warning small">
+          <i class="fas fa-info-circle me-1"></i>
+
+          After clicking
+          <strong>Register Student</strong>,
+          the system will save the student and generate
+          the face encoding from the uploaded photo.
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       NAVIGATION BUTTONS
+  ========================= -->
+  <div class="d-flex justify-content-between mt-4">
+
+    <button
+      type="button"
+      class="btn btn-outline-secondary"
+      id="prevBtn"
+      style="display:none;"
+    >
+      <i class="fas fa-arrow-left me-2"></i>
+      Back
+    </button>
+
+
+    <button
+      type="button"
+      class="btn btn-primary ms-auto"
+      id="nextBtn"
+    >
+      Next
+      <i class="fas fa-arrow-right ms-2"></i>
+    </button>
+
+
+    <button
+      type="submit"
+      class="btn btn-success ms-auto"
+      id="submitBtn"
+      style="display:none;"
+    >
+      <i class="fas fa-user-check me-2"></i>
+      Register Student
+    </button>
+
+  </div>
+
+</form>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    let currentStep = 1;
+
+    const form = document.getElementById("registerForm");
+    const nextBtn = document.getElementById("nextBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const submitBtn = document.getElementById("submitBtn");
+
+
+    /* =========================
+       SHOW STEP
+    ========================= */
+
+    function showStep(step) {
+
+        document
+            .querySelectorAll(".form-step")
+            .forEach(function (element) {
+                element.style.display = "none";
+            });
+
+
+        const selectedStep = document.querySelector(
+            '.form-step[data-step="' + step + '"]'
+        );
+
+
+        if (selectedStep) {
+            selectedStep.style.display = "block";
+        }
+
+
+        /* Step indicators */
+
+        for (let i = 1; i <= 3; i++) {
+
+            const item =
+                document.getElementById("stepItem" + i);
+
+            if (!item) continue;
+
+            item.classList.remove("active", "completed");
+
+            if (i < step) {
+                item.classList.add("completed");
+            }
+
+            if (i === step) {
+                item.classList.add("active");
+            }
+        }
+
+
+        /* Buttons */
+
+        if (step === 1) {
+
+            prevBtn.style.display = "none";
+            nextBtn.style.display = "inline-block";
+            submitBtn.style.display = "none";
+
+        } else if (step === 2) {
+
+            prevBtn.style.display = "inline-block";
+            nextBtn.style.display = "inline-block";
+            submitBtn.style.display = "none";
+
+        } else {
+
+            prevBtn.style.display = "inline-block";
+            nextBtn.style.display = "none";
+            submitBtn.style.display = "inline-block";
+        }
+
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    }
+
+
+    /* =========================
+       VALIDATE STEP 1
+    ========================= */
+
+    function validateStep1() {
+
+        const requiredFields = [
+            "full_name",
+            "roll_number",
+            "college",
+            "department",
+            "semester"
+        ];
+
+
+        for (const fieldId of requiredFields) {
+
+            const field =
+                document.getElementById(fieldId);
+
+            if (!field) {
+                continue;
+            }
+
+
+            if (!field.value.trim()) {
+
+                field.classList.add("is-invalid");
+
+                field.focus();
+
+                alert(
+                    "Please fill all required fields."
+                );
+
+                return false;
+            }
+
+
+            field.classList.remove("is-invalid");
+        }
+
+
+        return true;
+    }
+
+
+    /* =========================
+       VALIDATE STEP 2
+    ========================= */
+
+    function validateStep2() {
+
+        const photo1 =
+            document.getElementById("photo1");
+
+
+        if (
+            !photo1 ||
+            photo1.files.length === 0
+        ) {
+
+            alert(
+                "Please upload the Front Face photo."
+            );
+
+            if (photo1) {
+                photo1.click();
+            }
+
+            return false;
+        }
+
+
+        return true;
+    }
+
+
+    /* =========================
+       CONFIRM DETAILS
+    ========================= */
+
+    function populateConfirmation() {
+
+        const fields = [
+
+            ["full_name", "confirm_full_name"],
+            ["roll_number", "confirm_roll_number"],
+            ["college", "confirm_college"],
+            ["department", "confirm_department"],
+            ["semester", "confirm_semester"],
+            ["student_id", "confirm_student_id"],
+            ["email", "confirm_email"],
+            ["phone", "confirm_phone"]
+
+        ];
+
+
+        fields.forEach(function (pair) {
+
+            const source =
+                document.getElementById(pair[0]);
+
+            const target =
+                document.getElementById(pair[1]);
+
+
+            if (!source || !target) {
+                return;
+            }
+
+
+            let value =
+                source.value.trim();
+
+
+            if (
+                pair[0] === "semester" &&
+                value
+            ) {
+                value = "Semester " + value;
+            }
+
+
+            target.textContent =
+                value || "-";
+        });
+    }
+
+
+    /* =========================
+       NEXT BUTTON
+    ========================= */
+
+    nextBtn.addEventListener(
+        "click",
+        function () {
+
+            /* STEP 1 → STEP 2 */
+
+            if (currentStep === 1) {
+
+                if (!validateStep1()) {
+                    return;
+                }
+
+                currentStep = 2;
+
+                showStep(currentStep);
+
+                return;
+            }
+
+
+            /* STEP 2 → STEP 3 */
+
+            if (currentStep === 2) {
+
+                if (!validateStep2()) {
+                    return;
+                }
+
+                populateConfirmation();
+
+                currentStep = 3;
+
+                showStep(currentStep);
+
+                return;
+            }
+
+        }
+    );
+
+
+    /* =========================
+       BACK BUTTON
+    ========================= */
+
+    prevBtn.addEventListener(
+        "click",
+        function () {
+
+            if (currentStep > 1) {
+
+                currentStep--;
+
+                showStep(currentStep);
+            }
+
+        }
+    );
+
+
+    /* =========================
+       PHOTO PREVIEW
+    ========================= */
+
+    ["1", "2", "3"].forEach(
+        function (number) {
+
+            const input =
+                document.getElementById(
+                    "photo" + number
+                );
+
+            const preview =
+                document.getElementById(
+                    "preview" + number
+                );
+
+            const content =
+                document.getElementById(
+                    "uploadContent" + number
+                );
+
+
+            if (!input) {
+                return;
+            }
+
+
+            input.addEventListener(
+                "change",
+                function () {
+
+                    const file =
+                        input.files[0];
+
+
+                    if (!file) {
+                        return;
+                    }
+
+
+                    /* Check image */
+
+                    if (
+                        !file.type.startsWith("image/")
+                    ) {
+
+                        alert(
+                            "Please select a valid image file."
+                        );
+
+                        input.value = "";
+
+                        return;
+                    }
+
+
+                    /* Preview */
+
+                    const reader =
+                        new FileReader();
+
+
+                    reader.onload =
+                        function (event) {
+
+                            if (preview) {
+
+                                preview.src =
+                                    event.target.result;
+
+                                preview.style.display =
+                                    "block";
+                            }
+
+
+                            if (content) {
+
+                                content.style.display =
+                                    "none";
+                            }
+
+                        };
+
+
+                    reader.readAsDataURL(file);
+
+                }
+            );
+
+        }
+    );
+
+
+    /* =========================
+       FORM SUBMIT
+    ========================= */
+
+    form.addEventListener(
+        "submit",
+        function (event) {
+
+            const photo1 =
+                document.getElementById("photo1");
+
+
+            if (
+                !photo1 ||
+                photo1.files.length === 0
+            ) {
+
+                event.preventDefault();
+
+                alert(
+                    "Please upload the Front Face photo."
+                );
+
+                currentStep = 2;
+
+                showStep(currentStep);
+
+                return;
+            }
+
+
+            submitBtn.disabled = true;
+
+            submitBtn.innerHTML =
+                '<i class="fas fa-spinner fa-spin me-2"></i>' +
+                'Registering...';
+
+        }
+    );
+
+
+    /* =========================
+       INITIALIZE
+    ========================= */
+
+    showStep(1);
+
+});
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% block title %}Verify Attendance{% endblock %}
+
+{% block content %}
+<!-- Session Info Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1">
+      <li class="breadcrumb-item"><a href="{{ url_for('attendance.history') }}">Attendance</a></li>
+      <li class="breadcrumb-item active">Verify – Session #{{ session.id }}</li>
+    </ol></nav>
+    <h1 class="mb-0"><i class="fas fa-user-check me-2"></i>Review Attendance</h1>
+    <p class="text-muted small mt-1">
+      <i class="fas fa-calendar me-1"></i>{{ session.date.strftime('%A, %d %B %Y') }}
+      &nbsp;·&nbsp;
+      <i class="fas fa-building me-1"></i>{{ session.department or 'N/A' }} &nbsp;·&nbsp;
+      Semester {{ session.semester or 'N/A' }} &nbsp;·&nbsp;
+      {% if session.subject %}<i class="fas fa-book me-1"></i>{{ session.subject.name }} &nbsp;·&nbsp;{% endif %}
+      <i class="fas fa-clock me-1"></i>{{ session.period or 'N/A' }}
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <div class="card px-3 py-2 text-center border-success">
+      <div class="fw-bold text-success fs-5" id="presentCount">{{ present_count }}</div>
+      <div class="text-muted" style="font-size:.75rem;">Present</div>
+    </div>
+    <div class="card px-3 py-2 text-center border-danger">
+      <div class="fw-bold text-danger fs-5" id="absentCount">{{ absent_count }}</div>
+      <div class="text-muted" style="font-size:.75rem;">Absent</div>
+    </div>
+    <div class="card px-3 py-2 text-center">
+      <div class="fw-bold fs-5">{{ total_count }}</div>
+      <div class="text-muted" style="font-size:.75rem;">Total</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Left: Classroom Photo -->
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-image me-2"></i>Classroom Photo</span>
+        <div>
+          <span class="badge bg-success me-1"><i class="fas fa-square me-1"></i>Recognized</span>
+          <span class="badge bg-danger"><i class="fas fa-square me-1"></i>Unknown</span>
+        </div>
+      </div>
+      <div class="card-body text-center p-2">
+        {% if photo_url %}
+          <div class="face-canvas-wrapper" id="faceCanvasWrapper">
+            <img src="{{ photo_url }}" id="classroomPhoto" class="img-fluid rounded"
+                 alt="Classroom photo" />
+            <!-- Face boxes will be drawn by JS -->
+          </div>
+          <p class="text-muted small mt-2">
+            <i class="fas fa-info-circle me-1"></i>Click on a face box to highlight the student in the list
+          </p>
+        {% else %}
+          <div class="text-muted py-4">
+            <i class="fas fa-image fa-3x mb-2 opacity-25"></i>
+            <p>No annotated photo available.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if unknown_records %}
+    <div class="card mt-4">
+      <div class="card-header text-warning fw-semibold">
+        <i class="fas fa-user-question me-2"></i>Unknown Faces ({{ unknown_records|length }})
+      </div>
+      <div class="card-body">
+        <p class="text-muted small">The following faces were detected but not matched to any registered student:</p>
+        {% for rec in unknown_records %}
+        <div class="d-flex align-items-center gap-2 mb-2 p-2 bg-light rounded">
+          <div class="icon-circle bg-warning bg-opacity-20 text-warning" style="width:36px;height:36px;font-size:.9rem;">
+            <i class="fas fa-question"></i>
+          </div>
+          <div>
+            <div class="fw-semibold small">Unknown Face {{ loop.index }}</div>
+            {% if rec.confidence_score %}
+            <div class="text-muted" style="font-size:.75rem;">Confidence: {{ "%.0f"|format(rec.confidence_score * 100) }}%</div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: Attendance Table -->
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-list-check me-2"></i>Attendance List</span>
+        <div class="d-flex gap-2">
+          <button class="btn btn-xs btn-outline-success btn-sm py-0" onclick="markAll('Present')">All Present</button>
+          <button class="btn btn-xs btn-outline-danger btn-sm py-0" onclick="markAll('Absent')">All Absent</button>
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('attendance.save_attendance', session_id=session.id) }}" id="attendanceForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div style="max-height:60vh;overflow-y:auto;">
+          <table class="table mb-0">
+            <thead class="sticky-top bg-white">
+              <tr>
+                <th>Roll No</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Conf.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for record in records %}
+              <tr data-roll="{{ record.student.roll_number }}"
+                  data-student-id="{{ record.student_id }}"
+                  id="row_{{ record.student_id }}">
+                <td><code class="small text-primary">{{ record.student.roll_number }}</code></td>
+                <td class="small">{{ record.student.full_name }}</td>
+                <td>
+                  <input type="hidden" name="status_{{ record.student_id }}"
+                         id="status_input_{{ record.student_id }}"
+                         value="{{ record.status }}" />
+                  <div class="status-toggle">
+                    <button type="button"
+                            class="btn btn-sm btn-present py-0 {% if record.status == 'Present' %}btn-success{% else %}btn-outline-success{% endif %}"
+                            onclick="setAttendanceStatus({{ record.student_id }}, 'Present')"
+                            title="Mark Present">
+                      <i class="fas fa-check"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-sm btn-absent py-0 {% if record.status == 'Absent' %}btn-danger{% else %}btn-outline-danger{% endif %}"
+                            onclick="setAttendanceStatus({{ record.student_id }}, 'Absent')"
+                            title="Mark Absent">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                  <span class="status-badge {% if record.status == 'Present' %}badge-present{% else %}badge-absent{% endif %} ms-1 d-none d-xl-inline">
+                    {{ record.status }}
+                  </span>
+                </td>
+                <td>
+                  {% if record.confidence_score and record.marked_by == 'auto' %}
+                    <div class="confidence-bar" style="width:48px;">
+                      <div class="confidence-fill {% if record.confidence_score > 0.7 %}bg-success{% elif record.confidence_score > 0.5 %}bg-warning{% else %}bg-danger{% endif %}"
+                           style="width:{{ (record.confidence_score * 100)|int }}%"></div>
+                    </div>
+                    <span style="font-size:.7rem;color:#9aa0a6;">{{ "%.0f"|format(record.confidence_score * 100) }}%</span>
+                  {% else %}
+                    <span class="text-muted small">manual</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card-footer bg-white border-top p-3">
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span id="summaryText">{{ present_count }} Present, {{ absent_count }} Absent, {{ total_count }} Total</span>
+              <span id="summaryPct">{{ ((present_count / total_count * 100)|int) if total_count else 0 }}%</span>
+            </div>
+            <div class="progress" style="height:6px;">
+              <div class="progress-bar bg-success" id="summaryBar"
+                   style="width:{{ ((present_count / total_count * 100)|int) if total_count else 0 }}%"></div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-success w-100 fw-semibold"
+                  onclick="return confirm('Finalize attendance? This cannot be undone.')">
+            <i class="fas fa-check-double me-2"></i>Confirm & Save Attendance
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ---- Override setAttendanceStatus to update summary ----
+function setAttendanceStatus(studentId, newStatus) {
+  const hiddenInput = document.getElementById(`status_input_${studentId}`);
+  if (hiddenInput) hiddenInput.value = newStatus;
+
+  const row = document.querySelector(`tr[data-student-id="${studentId}"]`);
+  if (row) {
+    const presentBtn = row.querySelector('.btn-present');
+    const absentBtn  = row.querySelector('.btn-absent');
+    const badge      = row.querySelector('.status-badge');
+
+    if (newStatus === 'Present') {
+      presentBtn?.classList.replace('btn-outline-success','btn-success');
+      absentBtn?.classList.replace('btn-danger','btn-outline-danger');
+      if (badge) { badge.textContent = 'Present'; badge.className = 'status-badge badge-present ms-1 d-none d-xl-inline'; }
+    } else {
+      absentBtn?.classList.replace('btn-outline-danger','btn-danger');
+      presentBtn?.classList.replace('btn-success','btn-outline-success');
+      if (badge) { badge.textContent = 'Absent'; badge.className = 'status-badge badge-absent ms-1 d-none d-xl-inline'; }
+    }
+    updateSummary();
+  }
+}
+
+function markAll(status) {
+  document.querySelectorAll('[id^="status_input_"]').forEach(inp => {
+    const studentId = inp.name.replace('status_', '');
+    setAttendanceStatus(parseInt(studentId), status);
+  });
+}
+
+function updateSummary() {
+  const inputs = document.querySelectorAll('[id^="status_input_"]');
+  const total   = inputs.length;
+  const present = [...inputs].filter(i => i.value === 'Present').length;
+  const absent  = total - present;
+  const pct     = total > 0 ? Math.round((present/total)*100) : 0;
+
+  document.getElementById('summaryText').textContent = `${present} Present, ${absent} Absent, ${total} Total`;
+  document.getElementById('summaryPct').textContent  = pct + '%';
+  document.getElementById('summaryBar').style.width  = pct + '%';
+  document.getElementById('presentCount').textContent = present;
+  document.getElementById('absentCount').textContent  = absent;
+}
+
+// ---- Face box highlighting ----
+function highlightStudent(rollNumber, scroll = true) {
+  document.querySelectorAll('.attendance-row-highlighted').forEach(r => r.classList.remove('attendance-row-highlighted'));
+  if (!rollNumber) return;
+  const row = document.querySelector(`tr[data-roll="${rollNumber}"]`);
+  if (row) {
+    row.classList.add('attendance-row-highlighted');
+    if (scroll) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+// ---- Draw face boxes on classroom photo ----
+document.addEventListener('DOMContentLoaded', () => {
+  const img = document.getElementById('classroomPhoto');
+  const wrapper = document.getElementById('faceCanvasWrapper');
+  if (!img || !wrapper) return;
+
+  // Collect recognized faces from rendered records
+  const recognizedRolls = [];
+  {% for record in records %}
+    {% if record.status == 'Present' and record.marked_by == 'auto' %}
+      recognizedRolls.push('{{ record.student.roll_number }}');
+    {% endif %}
+  {% endfor %}
+
+  // We don't have pixel-level bounding box data here (it was used for the annotated image),
+  // so we show the annotated photo as the main image, which already has boxes drawn on it.
+  // The face box interactivity works through the student list highlighting.
+  img.addEventListener('load', () => {
+    // Image loaded — ready for interaction
+    console.log('Classroom photo loaded with face annotations.');
+  });
+});
+</script>
+{% endblock %}

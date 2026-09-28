@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Session #{{ session.id }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1">
+      <li class="breadcrumb-item"><a href="{{ url_for('attendance.history') }}">Attendance History</a></li>
+      <li class="breadcrumb-item active">Session #{{ session.id }}</li>
+    </ol></nav>
+    <h1>Attendance – {{ session.date.strftime('%d %B %Y') }}</h1>
+    <p class="text-muted small">
+      {{ session.department or 'N/A' }} · Semester {{ session.semester or 'N/A' }}
+      · {{ session.period or 'N/A' }}
+      {% if session.subject %} · {{ session.subject.name }}{% endif %}
+    </p>
+  </div>
+  <div>
+    {% if session.is_finalized %}
+      <span class="badge bg-success fs-6 px-3 py-2">Finalized</span>
+    {% else %}
+      <a href="{{ url_for('attendance.verify_session', session_id=session.id) }}" class="btn btn-warning">
+        <i class="fas fa-edit me-1"></i>Continue Review
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="stat-card success">
+      <div class="stat-value">{{ session.present_count }}</div>
+      <div class="stat-label">Present</div>
+      <div class="stat-icon"><i class="fas fa-user-check"></i></div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card danger">
+      <div class="stat-value">{{ session.absent_count }}</div>
+      <div class="stat-label">Absent</div>
+      <div class="stat-icon"><i class="fas fa-user-times"></i></div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card primary">
+      <div class="stat-value">{{ session.total_count }}</div>
+      <div class="stat-label">Total Students</div>
+      <div class="stat-icon"><i class="fas fa-users"></i></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  {% if photo_url %}
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header"><i class="fas fa-image me-2"></i>Classroom Photo</div>
+      <div class="card-body text-center">
+        <img src="{{ photo_url }}" class="img-fluid rounded" alt="Classroom photo" />
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="col-lg-{% if photo_url %}7{% else %}12{% endif %}">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="fas fa-list me-2"></i>Attendance Records</span>
+        <a href="{{ url_for('dashboard.export_csv') }}" class="btn btn-sm btn-outline-secondary">
+          <i class="fas fa-download me-1"></i>Export CSV
+        </a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table mb-0">
+            <thead>
+              <tr><th>#</th><th>Roll No</th><th>Name</th><th>Status</th><th>Method</th><th>Confidence</th></tr>
+            </thead>
+            <tbody>
+              {% for record in records %}
+              <tr>
+                <td class="text-muted small">{{ loop.index }}</td>
+                <td><code class="text-primary small">{{ record.student.roll_number }}</code></td>
+                <td>{{ record.student.full_name }}</td>
+                <td>
+                  {% if record.status == 'Present' %}
+                    <span class="badge-present">Present</span>
+                  {% else %}
+                    <span class="badge-absent">Absent</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge {% if record.marked_by == 'auto' %}bg-info{% else %}bg-secondary{% endif %}">
+                    {{ record.marked_by }}
+                  </span>
+                </td>
+                <td>
+                  {% if record.confidence_score %}
+                    {{ "%.0f"|format(record.confidence_score * 100) }}%
+                  {% else %}-{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+              {% if unknown_records %}
+              <tr class="table-warning">
+                <td colspan="6">
+                  <i class="fas fa-exclamation-triangle me-1"></i>
+                  {{ unknown_records|length }} unrecognized face(s) detected in the classroom photo.
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

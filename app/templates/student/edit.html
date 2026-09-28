@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Edit Student{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1">
+    <li class="breadcrumb-item"><a href="{{ url_for('student.list_students') }}">Students</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('student.detail', student_id=student.id) }}">{{ student.full_name }}</a></li>
+    <li class="breadcrumb-item active">Edit</li>
+  </ol></nav>
+  <h1><i class="fas fa-user-edit me-2"></i>Edit Student</h1>
+</div>
+
+<div class="card">
+  <div class="card-header">Student Information</div>
+  <div class="card-body p-4">
+    <form method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Full Name</label>
+          <input type="text" name="full_name" class="form-control" value="{{ student.full_name }}" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Roll Number</label>
+          <input type="text" class="form-control" value="{{ student.roll_number }}" disabled />
+          <div class="form-text">Roll number cannot be changed.</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">College</label>
+          <input type="text" name="college" class="form-control" value="{{ student.college or '' }}" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Department</label>
+          <input type="text" name="department" class="form-control" value="{{ student.department or '' }}" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Semester</label>
+          <select name="semester" class="form-select">
+            {% for i in range(1,9) %}
+              <option value="{{ i }}" {% if student.semester == i|string %}selected{% endif %}>Semester {{ i }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Student ID</label>
+          <input type="text" name="student_id" class="form-control" value="{{ student.student_id or '' }}" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Phone</label>
+          <input type="tel" name="phone" class="form-control" value="{{ student.phone or '' }}" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Email</label>
+          <input type="email" name="email" class="form-control" value="{{ student.email or '' }}" />
+        </div>
+
+        <div class="col-12"><hr /><h6 class="fw-semibold text-muted">Update Photos (optional)</h6></div>
+        {% for i in range(1,4) %}
+        <div class="col-md-4">
+          <label class="form-label">{{ ['Front Face','Left Side','Right Side'][i-1] }}</label>
+          <input type="file" name="photo{{ i }}" class="form-control" accept="image/*" />
+          {% set path = student['photo' + i|string + '_path'] %}
+          {% if path %}
+            <div class="text-muted small mt-1"><i class="fas fa-check-circle text-success me-1"></i>Current photo exists</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Save Changes</button>
+        <a href="{{ url_for('student.detail', student_id=student.id) }}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

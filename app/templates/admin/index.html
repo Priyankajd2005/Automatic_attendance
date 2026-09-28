@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Admin Panel{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-tools me-2"></i>Admin Panel</h1>
+  <p>System management and configuration</p>
+</div>
+
+<!-- System Stats -->
+<div class="row g-4 mb-4">
+  {% for label, icon, color, value in [
+    ('Students', 'fa-users', 'primary', stats.students),
+    ('Subjects', 'fa-book', 'success', stats.subjects),
+    ('Sessions', 'fa-clipboard-list', 'warning', stats.sessions),
+    ('Face Encodings', 'fa-brain', 'info', stats.encodings),
+  ] %}
+  <div class="col-sm-6 col-xl-3">
+    <div class="card p-3 d-flex flex-row align-items-center gap-3">
+      <div class="icon-circle bg-{{ color }} text-white" style="width:50px;height:50px;font-size:1.3rem;flex-shrink:0;">
+        <i class="fas {{ icon }}"></i>
+      </div>
+      <div>
+        <div class="fw-bold fs-4">{{ value }}</div>
+        <div class="text-muted small">{{ label }}</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-4">
+  <div class="col-md-6 col-lg-3">
+    <div class="card h-100 shadow-hover text-center p-4">
+      <div class="icon-circle bg-success bg-opacity-10 text-success mx-auto mb-3" style="width:64px;height:64px;font-size:1.8rem;">
+        <i class="fab fa-google"></i>
+      </div>
+      <h6 class="fw-bold">Sync Google Forms</h6>
+      <p class="text-muted small">Import students from Google Sheets / Google Forms responses.</p>
+      <a href="{{ url_for('admin.sync_google') }}" class="btn btn-success btn-sm mt-auto">Open Sync</a>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-3">
+    <div class="card h-100 shadow-hover text-center p-4">
+      <div class="icon-circle bg-primary bg-opacity-10 text-primary mx-auto mb-3" style="width:64px;height:64px;font-size:1.8rem;">
+        <i class="fas fa-book"></i>
+      </div>
+      <h6 class="fw-bold">Manage Subjects</h6>
+      <p class="text-muted small">Add, edit, or delete academic subjects and courses.</p>
+      <a href="{{ url_for('admin.subjects') }}" class="btn btn-primary btn-sm mt-auto">Manage Subjects</a>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-3">
+    <div class="card h-100 shadow-hover text-center p-4">
+      <div class="icon-circle bg-warning bg-opacity-10 text-warning mx-auto mb-3" style="width:64px;height:64px;font-size:1.8rem;">
+        <i class="fas fa-chalkboard-teacher"></i>
+      </div>
+      <h6 class="fw-bold">Manage Teachers</h6>
+      <p class="text-muted small">View all registered teacher accounts.</p>
+      <a href="{{ url_for('admin.teachers') }}" class="btn btn-warning btn-sm mt-auto">View Teachers</a>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-3">
+    <div class="card h-100 shadow-hover text-center p-4">
+      <div class="icon-circle bg-info bg-opacity-10 text-info mx-auto mb-3" style="width:64px;height:64px;font-size:1.8rem;">
+        <i class="fas fa-database"></i>
+      </div>
+      <h6 class="fw-bold">Create Demo Data</h6>
+      <p class="text-muted small">Seed sample subjects for testing the system.</p>
+      <form method="POST" action="{{ url_for('admin.create_demo_data') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="btn btn-info btn-sm mt-auto text-white" onclick="return confirm('Add demo subjects?')">
+          Create Demo Data
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

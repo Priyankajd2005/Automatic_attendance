@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}Students{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <h1><i class="fas fa-users me-2"></i>Students</h1>
+    <p>{{ students|length }} student(s) found</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.sync_google') }}" class="btn btn-outline-success">
+      <i class="fab fa-google me-1"></i>Sync from Google Forms
+    </a>
+    <a href="{{ url_for('student.register') }}" class="btn btn-primary">
+      <i class="fas fa-user-plus me-1"></i>Register Student
+    </a>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small fw-semibold">Search</label>
+        <input type="text" name="q" class="form-control" placeholder="Name or roll number..." value="{{ search }}" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold">Department</label>
+        <select name="department" class="form-select">
+          <option value="">All Departments</option>
+          {% for dept in departments %}
+            <option value="{{ dept }}" {% if dept == current_dept %}selected{% endif %}>{{ dept }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold">Semester</label>
+        <select name="semester" class="form-select">
+          <option value="">All Semesters</option>
+          {% for sem in semesters %}
+            <option value="{{ sem }}" {% if sem == current_sem %}selected{% endif %}>Semester {{ sem }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary me-2"><i class="fas fa-search me-1"></i>Filter</button>
+        <a href="{{ url_for('student.list_students') }}" class="btn btn-outline-secondary">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Student Table -->
+<div class="card">
+  <div class="card-body p-0">
+    {% if students %}
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Roll Number</th>
+            <th>Department</th>
+            <th>Semester</th>
+            <th>Face Data</th>
+            <th>Registered</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+          <tr>
+            <td class="text-muted small">{{ loop.index }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                {% if student.photo1_path and student.photo1_path | fileexists %}
+                  <img src="{{ url_for('static', filename='uploads/photos/' + student.photo1_path.split('/')[-1].split('\\')[-1]) }}"
+                       class="student-photo-thumb" width="45" height="45" style="border-radius:50%;object-fit:cover;"
+                       onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                {% endif %}
+                <div class="icon-circle bg-primary bg-opacity-10 text-primary" style="width:45px;height:45px;flex-shrink:0;{% if student.photo1_path %}display:none;{% endif %}">
+                  <i class="fas fa-user"></i>
+                </div>
+                <div>
+                  <div class="fw-semibold">{{ student.full_name }}</div>
+                  <div class="text-muted small">{{ student.email or '-' }}</div>
+                </div>
+              </div>
+            </td>
+            <td><code class="text-primary fw-semibold">{{ student.roll_number }}</code></td>
+            <td>{{ student.department or '-' }}</td>
+            <td>{% if student.semester %}Sem {{ student.semester }}{% else %}-{% endif %}</td>
+            <td>
+              {% if student.face_encoding_path %}
+                <span class="badge bg-success"><i class="fas fa-check me-1"></i>Encoded</span>
+              {% else %}
+                <span class="badge bg-warning text-dark"><i class="fas fa-exclamation me-1"></i>Missing</span>
+              {% endif %}
+            </td>
+            <td class="text-muted small">{{ student.registered_at.strftime('%d %b %Y') }}</td>
+            <td>
+              <div class="d-flex gap-1">
+                <a href="{{ url_for('student.detail', student_id=student.id) }}" class="btn btn-sm btn-outline-primary py-0">
+                  <i class="fas fa-eye"></i>
+                </a>
+                <a href="{{ url_for('student.edit', student_id=student.id) }}" class="btn btn-sm btn-outline-secondary py-0">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <form method="POST" action="{{ url_for('student.delete', student_id=student.id) }}"
+                      onsubmit="return confirm('Remove {{ student.full_name }}?')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" class="btn btn-sm btn-outline-danger py-0">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="fas fa-users fa-3x mb-3 opacity-25"></i>
+      <p class="mb-2">No students found.</p>
+      <a href="{{ url_for('student.register') }}" class="btn btn-primary btn-sm">Register First Student</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
